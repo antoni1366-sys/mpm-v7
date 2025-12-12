@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MPM • V7 — 32 módulos</title>
+  <meta name="description" content="MPM Versión 7 — Test de 32 módulos. Guardado en localStorage y exportación de resultados.">
+  <style>
+    :root{
+      --bg:#071021;
+      --card:#071826;
+      --accent:#0a84ff;
+      --muted:#cbd5e1;
+      --text:#eef2ff;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:18px}
+    h1{font-size:20px;margin:6px 0}h2{font-size:17px;margin:8px 0}
+    .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;margin:6px 6px 6px 0;font-weight:700}
+    .menu-btn{display:block;width:100%;padding:12px;border-radius:10px;background:#081322;margin:8px 0;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.03);cursor:pointer;font-weight:700}
+    .panel{background:var(--card);padding:12px;border-radius:8px;margin:12px 0}
+    .test-card{background:#051220;padding:16px;border-radius:10px;margin:12px 0}
+    input[type=range]{width:100%}
+    .range-val{color:#ffd36e;font-weight:700}
+    .result{background:#021018;padding:16px;border-radius:10px;margin:12px 0;font-size:15px;line-height:1.45}
+    .tag{display:inline-block;padding:4px 8px;border-radius:8px;margin-left:6px;font-weight:700;color:#000}
+    .tag.fuego{background:#ffb07a}.tag.agua{background:#9fd6ff}.tag.aire{background:#e6e6e6}.tag.tierra{background:#d6b98a}
+    .small{font-size:13px;color:var(--muted)}
+    input[type=text],input[type=email]{width:96%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:#04101a;color:#fff;margin:6px 0;box-sizing:border-box}
+    .hidden{display:none !important}.muted{color:var(--muted)}a{color:var(--accent);text-decoration:none}pre{margin:0;font-family:inherit;white-space:pre-wrap;color:var(--muted)}label{display:block;margin-top:6px;font-size:13px;color:var(--muted)}
+    @media (max-width:520px){.wrap{padding:12px}.btn{padding:8px 10px}}
+    /* history list */
+    .history-item{background:#041424;border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:8px;margin:8px 0;display:flex;justify-content:space-between;align-items:center}
+    .tiny{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>MPM • V7 — 32 módulos</h1>
+    <p class="small">Añadido: historial local, descarga JSON/TXT, impresión y gestión del historial.<br>Contacto: <a href="mailto:preemptivemovement@gmail.com">preemptivemovement@gmail.com</a></p>
+    <div class="panel small" style="margin-top:8px">
+      <strong>Uso responsable:</strong> Esta herramienta está dirigida a mayores de <strong>18 años</strong>. Los resultados son orientativos y no sustituyen asesoramiento profesional. El historial se guarda localmente en tu dispositivo (localStorage). Si quieres eliminarlo, usa la opción "Borrar historial".
+    </div>
+
+    <div id="home">
+      <button class="btn" onclick="go('menu')">IR AL MENÚ</button>
+      <button class="btn" onclick="go('history')" style="background:#16a34a">VER HISTORIAL</button>
+    </div>
+
+    <div id="menu" class="hidden">
+      <h2>Selecciona un módulo (32)</h2>
+      <div class="panel small">Cada módulo contiene 16 ítems. Responde del 1 al 10.</div>
+      <div id="menuList" aria-live="polite"></div>
+
+      <div class="panel" style="margin-top:12px">
+        <h3 style="margin:4px 0 8px 0">Compartir / QR</h3>
+        <p class="small">Puedes generar un QR para promocionar este test. Pega un enlace público (ej. Drive, página web) y pulsa "Generar QR". Recomendado: usa un enlace público corto o la URL de tu web cuando esté disponible.</p>
+        <label for="shareUrl" class="small">Enlace compartible</label>
+        <input id="shareUrl" placeholder="https://drive.google.com/.... o https://tusitio.com/mpm" style="width:90%">
+        <div style="margin-top:8px">
+          <button class="btn" onclick="generateQR()">Generar QR</button>
+          <button class="btn" onclick="downloadQR()" style="background:#06b6d4">Descargar QR</button>
+        </div>
+        <div style="margin-top:8px">
+          <img id="qrPreview" alt="QR preview" style="width:180px;height:180px;border-radius:8px;background:#fff;display:none">
+        </div>
+      </div>
+      <div class="small">Contacto: <a href="mailto:preemptivemovement@gmail.com">preemptivemovement@gmail.com</a> · Teléfono: <span id="phoneMasked">672•••535</span> <button id="revealPhoneBtn" class="btn" style="background:#374151;padding:6px 8px">Mostrar teléfono</button></div>
+    </div>
+
+    <div id="test" class="hidden">
+      <div class="test-card" role="region" aria-label="Test MPM">
+        <div id="testName" style="font-weight:800;margin-bottom:6px"></div>
+        <p class="small">Responde de 1 a 10 según tu afinidad actual.</p>
+        <div id="pregunta" style="font-size:16px;font-weight:700;margin:8px 0"></div>
+
+        <label for="slider" class="small">Valor: <span id="valor" class="range-val">5</span></label>
+        <input id="slider" type="range" min="1" max="10" value="5" oninput="updateVal()" aria-valuemin="1" aria-valuemax="10" />
+
+        <div style="margin-top:12px">
+          <button class="btn" id="btnPrev">◀ Atrás</button>
+          <button class="btn" id="btnNext">Siguiente ▶</button>
+          <button class="btn" id="btnCancel" style="background:#374151">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="result" class="hidden">
+      <h2>Resultado ampliado</h2>
+      <div id="resultado" class="result" role="region" aria-live="polite"></div>
+
+      <div class="panel">
+        <p class="small">Envía tu resultado para un análisis profesional o guarda una copia local:</p>
+        <label for="userName">Tu nombre (obligatorio)</label>
+        <input id="userName" placeholder="Tu nombre (obligatorio)" aria-required="true">
+        <label for="userEmail">Tu correo (opcional)</label>
+        <input id="userEmail" type="email" placeholder="Tu correo (opcional)">
+        <label style="margin-top:8px"><input type="checkbox" id="ageCheck"> <span class="small">Confirmo que tengo 18 años o más</span></label>
+        <div style="margin-top:8px">
+          <button class="btn" id="btnSend">Enviar resultado por email</button>
+          <button class="btn" id="btnSave" style="background:#f59e0b">Guardar en historial</button>
+          <button class="btn" id="btnJson" style="background:#06b6d4">Descargar JSON</button>
+          <button class="btn" id="btnTxt" style="background:#8b5cf6">Descargar TXT</button>
+          <button class="btn" id="btnPrint" style="background:#10b981">Imprimir</button>
+        </div>
+        <div style="margin-top:8px">
+          <button class="btn" id="btnBackMenu" style="background:#374151">Volver al menú</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="history" class="hidden">
+      <h2>Historial local</h2>
+      <div id="historyList" class="panel"></div>
+      <div style="margin-top:8px">
+        <button class="btn" id="btnClearHistory" style="background:#ef4444">Borrar historial</button>
+        <button class="btn" id="btnBackFromHistory" style="background:#374151">Volver</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ======= Utility & State =======
+    // Ensure 'go' exists before any callers by defining it first
+    function go(section){
+      ["home","menu","test","result","history"].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.classList.add('hidden');
+      });
+      const show=document.getElementById(section);
+      if(show) show.classList.remove('hidden');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    // expose globally in case inline handlers expect it
+    window.go = go;
+
+    const tests = {
+      colores_v1:["Rojo","Azul","Verde","Amarillo","Negro","Blanco","Morado","Naranja","Rosa","Gris","Turquesa","Marrón","Dorado","Plateado","Beige","Fucsia"],
+      colores_v2:["Borgoña","Cian","Oliva","Mostaza","Grafito","Marfil","Lavanda","Mandarina","Magenta","Pizarra","Aguamarina","Chocolate","Bronce","Níquel","Marfil cálido","Coral"],
+      ciudades_v1:["Tokio","París","Nueva York","Roma","Londres","Sídney","Ámsterdam","Seúl","Barcelona","Los Ángeles","Dubái","Berlín","Buenos Aires","Toronto","El Cairo","Madrid"],
+      ciudades_v2:["Lisboa","Estocolmo","Helsinki","San Petersburgo","Mumbai","Sevilla","Valencia","Milán","Chicago","Singapur","Viena","Praga","Zúrich","Hiroshima","Cartagena","Santiago"],
+      autos_v1:["Ferrari","Toyota","Mercedes","Audi","Tesla","Ford","BMW","Chevrolet","Lamborghini","Honda","Porsche","Hyundai","Range Rover","Volkswagen","Peugeot","Citroën"],
+      autos_v2:["Mini Cooper","Nissan","Subaru","Jaguar","Kia","Maserati","Renault","Skoda","Seat","Alfa Romeo","Infiniti","Lotus","Bentley","MG","Mahindra","Polestar"],
+      alimentos_v1:["Chocolate","Manzana","Café","Pan","Carne","Pasta","Arroz","Queso","Pollo","Miel","Nueces","Salmón","Fresas","Aguacate","Huevos","Yogur"],
+      alimentos_v2:["Cacao puro","Pera","Té verde","Baguette","Ternera","Ravioli","Quinoa","Mozzarella","Pavo","Jarabe de arce","Almendras","Trucha","Frambuesa","Aceituna","Tofu","Kéfir"],
+      profesiones_v1:["Médico","Artista","Ingeniero","Abogado","Maestro","Programador","Empresario","Psicólogo","Chef","Policía","Arquitecto","Deportista","Científico","Actor","Piloto","Escritor"],
+      profesiones_v2:["Analista financiero","Terapeuta holístico","Diseñador UX/UI","Emprendedor digital","Director de ventas","Bombero","Entrenador personal","Enfermero","Consultor","Investigador forense","Product Manager","Mecánico aeronáutico","Gestor cultural","Preparador físico","Gestor logístico","Ciberseguridad"],
+      animales_v1:["León","Lobo","Águila","Delfín","Tigre","Serpiente","Perro","Gato","Caballo","Búho","Tiburón","Oso","Cuervo","Conejo","Toro","Halcón"],
+      animales_v2:["Zorro","Cisne","Pantera","Ballena","Mono","Camaleón","Puma","Gacela","Ñu","Gorrión","Pelícano","Erizo","Iguana","Lince","Bisonte","Lagarto"],
+      estaciones_v1:["Primavera","Verano","Otoño","Invierno","Amanecer","Atardecer","Mediodía","Medianoche","Tropical","Ártico","Templado","Desértico","Húmedo","Seco","Montañosa","Costera"],
+      estaciones_v2:["Lluvias","Estío","Bruma","Frío continental","Aurora","Crepúsculo","Tarde serena","Noche estrellada","Microclima urbano","Microclima rural","Madrugada","Anochecer","Tarde ventosa","Mañana fresca","Noche húmeda","Día claro"],
+      instrumentos_v1:["Piano","Guitarra","Violín","Flauta","Batería","Saxofón","Arpa","Trompeta","Bajo","Acordeón","Ukelele","Timbal","DJ Mixer","Voz","Órgano","Cello"],
+      instrumentos_v2:["Sintetizador","Clave","Mandolina","Bandoneón","Theremin","Cello eléctrico","Tabla","Shamisen","Ocarina","Sitar","Kalimba","Sax soprano","Xilófono","Didgeridoo","Hang","Sampler"],
+      paises_v1:["Japón","EEUU","Francia","España","Alemania","Italia","México","Brasil","Argentina","Canadá","Australia","Egipto","India","China","Rusia","Grecia"],
+      paises_v2:["Noruega","Portugal","Polonia","Hungría","Turquía","Perú","Chile","Colombia","Islandia","Ucrania","Irlanda","Marruecos","Vietnam","Tailandia","EAU","Singapur"],
+      metales_v1:["Oro","Plata","Bronce","Cobre","Hierro","Plomo","Titanio","Mercurio","Acero","Latón","Platino","Wolframio","Níquel","Aluminio","Cobalto","Iridio"],
+      metales_v2:["Acero inox","Níquel plateado","Titanio pulido","Cobre envejecido","Latón antiguo","Plomo reciclado","Bronce pulido","Aluminio cepillado","Bronce dorado","Oro rosa","Plata vieja","Hierro forjado","Platino satinado","Cobalto azul","Acero damasco","Níquel mate"],
+      paisajes_v1:["Mar","Bosque","Montaña","Desierto","Cascada","Pradera","Jungla","Cueva","Glaciar","Cañón","Volcán","Llanura","Isla","Tundra","Sabana","Arrecife"],
+      paisajes_v2:["Acantilado","Estuario","Valle fluvial","Páramo","Laguna","Hayedo","Matorral","Fosa marina","Llanura costera","Dolina","Meseta","Ribera","Pantano","Bosque seco","Bosque lluvioso","Bahía"],
+      arquitectura_v1:["Minimalista","Barroco","Gótico","Románico","Brutalista","Art Deco","Clásico","Futurista","Industrial","Neoclásico","Orgánico","Colonial","High-Tech","Renacentista","Moderno","Posmoderno"],
+      arquitectura_v2:["Vernacular","Ecléctico","Paramétrico","Sostenible","Bioclimático","Neo-Goticismo","Constructivista","Nórdico","Mediterráneo","Japandi","Deconstrucción","Tropical","High-tech suave","Low-tech","Pabellón","Estructuralismo"],
+      sabores_v1:["Dulce","Ácido","Amargo","Salado","Umami","Picante","Agridulce","Herbal","Tostado","Fresco","Cremoso","Fermentado","Marino","Ahumado","Frutal","Especiado"],
+      sabores_v2:["Caramelizado","Ácido tenue","Amargor seco","Mineral","Umami profundo","Chili ahumado","Agridulce cítrico","Aromático","Tostado ligero","Fresco herbal","Textura cremosa","Lácteo","Marino salino","Ahumado profundo","Fruta candida","Condimentado"],
+      tecnologias_v1:["IA","Robótica","Web3","Cripto","Medicina","Bioingeniería","Big Data","Nanotech","RV","Satélites","Movilidad eléctrica","IoT","Cloud","Nuclear","Drones","Cuántica"],
+      tecnologias_v2:["Edge","Gemelos digitales","Blockchain privado","5G/6G","Telemedicina","Biomarcadores","Data lakes","Nanomateriales","AR","Constelaciones","Movilidad EV","IoT industrial","Cloud híbrida","Renovable","Robots cobot","Sensórica"],
+      epocas_v1:["Grecia antigua","Roma imperial","Edad media","Renacimiento","Ilustración","Industrial","Años 20","Años 50","Años 80","Actualidad","Futuro cercano","Futuro lejano","Barroco","Romanticismo","Modernismo","Transhumanismo"],
+      epocas_v2:["Prehistoria","Bronce tardío","Edad Oscura","Gótico tardío","Siglo XVIII","Victoriano","Años 60","Años 90","Años 2000","Era digital","Post-industrial","Era espacial","Neo-renacimiento","Ciberpunk","Eco-renacimiento","Cronofuturo"],
+      arquetipos_v1:["Dragón","Fénix","Unicornio","Kraken","Pegaso","Minotauro","Sirena","Grifo","Quimera","Anubis","Thor","Medusa","Zeus","Hades","Ra","Odín"],
+      arquetipos_v2:["Guerrero","Sabio","Guía","Viajero","Creador","Destructor","Curador","Explorador","Señor noche","Custodio","Centinela","Herald","Tejedor","Forjador","Alquimista","Oráculo"]
+    };
+
+    // menú dinámico
+    const moduleKeys = Object.keys(tests);
+    const menuList = document.getElementById('menuList');
+    moduleKeys.forEach(key => {
+      const btn = document.createElement("button");
+      btn.className = "menu-btn";
+      const cleanName = key.replace(/_v1|_v2/g,"").replace(/_/g," ");
+      const label = cleanName.toUpperCase() + " • " + (key.endsWith("_v1") ? "Core" : "Exp");
+      btn.innerText = label;
+      btn.onclick = () => startTest(key);
+      menuList.appendChild(btn);
+    });
+
+    // state
+    let tipo = ""; let index = 0; let resps = []; let lastResult = null;
+
+    // test flow
+    function startTest(key){
+      if(!tests[key]) return alert('Módulo no encontrado.');
+      tipo = key; index = 0; resps = new Array(16).fill(5);
+      document.getElementById('testName').innerText = 'Test · ' + key.replace(/_/g,' ').toUpperCase();
+      loadQuestion();
+      go('test');
+    }
+
+    function loadQuestion(){
+      const q = tests[tipo][index];
+      document.getElementById('pregunta').innerText = (index+1) + '. ' + q;
+      const slider = document.getElementById('slider');
+      if(slider) slider.value = resps[index];
+      document.getElementById('valor').innerText = resps[index];
+      slider && slider.focus();
+    }
+
+    function updateVal(){ const slider = document.getElementById('slider'); resps[index] = Number(slider.value); document.getElementById('valor').innerText = slider.value; }
+    function next(){ if(index < 15){ index++; loadQuestion(); } else { calcular(); } }
+    function prev(){ if(index > 0){ index--; loadQuestion(); } }
+
+    const tabla = {"1111":[1,"fuego",4],"0000":[2,"fuego",-3],"0110":[3,"agua",4],"1001":[4,"agua",-3],"1000":[5,"aire",4],"0001":[6,"tierra",-3],"1110":[7,"tierra",4],"0111":[8,"aire",-3],"1100":[9,"fuego",2],"0011":[10,"fuego",-1],"0100":[11,"agua",2],"0010":[12,"tierra",2],"1101":[13,"tierra",-1],"1011":[14,"agua",-1],"1010":[15,"aire",2],"0101":[16,"aire",-1]};
+
+    const LecturasMPM = { fuego:{ base:["Impulso operativo elevado.","Activación orientada al movimiento.","Energía disponible para avanzar."], intensidad:{ alto:["Ritmo muy alto: conviene estructurar la acción."], medio:["Momento propicio para ejecutar sin exceso."], bajo:["Energía latente: activar paso inicial."] }, accion:["Define una prioridad y ejecútala hoy.","Cierra un pendiente importante.","Reduce distracciones para avanzar."] }, agua:{ base:["Sensibilidad incrementada.","Percepción interna activa.","Mayor influencia emocional del entorno."], intensidad:{ alto:["Carga emocional alta: evita decisiones críticas."], medio:["Buen equilibrio emocional para negociar."], bajo:["Es útil clarificar sentimientos antes de avanzar."] }, accion:["Solicita un punto de vista externo.","Anota cómo te sientes y revisa.","Da espacio antes de actuar."] }, aire:{ base:["Actividad cognitiva intensa.","Procesamiento de ideas elevado.","Momento de estructurar información."], intensidad:{ alto:["Riesgo de sobreanálisis: simplifica."], medio:["Buen balance entre reflexión y acción."], bajo:["Necesidad de foco y orden."] }, accion:["Reduce opciones a tres prioridades.","Convierte una idea en acción concreta.","Minimiza interrupciones."] }, tierra:{ base:["Necesidad de consolidación.","Enfoque en estructura y recursos.","Momento propicio para ordenar procesos."], intensidad:{ alto:["Estabilidad alta: evitar rigidez."], medio:["Base sólida: buen momento para avanzar."], bajo:["Falta de estructura: reforzar fundamentos."] }, accion:["Revisa tus procesos clave.","Asegura recursos esenciales.","Implementa una rutina mínima diaria."] } };
+
+    function sliceAvg(arr){ return Math.round((arr.reduce((a,b)=>a+b,0)/arr.length)*10)/10; }
+    function computeMetrics(all){ const emociones = sliceAvg(all.slice(0,4)); const psicologico = sliceAvg(all.slice(4,8)); const racional = sliceAvg(all.slice(8,12)); const ganas = sliceAvg(all.slice(12,16)); const mean = sliceAvg(all); const variance = all.reduce((acc,v)=>acc + Math.pow(v-mean,2),0) / all.length; const std = Math.sqrt(variance); const biorritmo = Math.max(1, Math.min(10, Math.round((3 - std) / 3 * 9 + 1))); return {emociones, psicologico, racional, ganas, biorritmo}; }
+
+    function calcBlock(start){ const vals = resps.slice(start,start+4); const avgVal = sliceAvg(vals); const bits = vals.map(v => v>=6 ? 1 : 0).join(''); const entry = tabla[bits] || [0,"aire",0]; const elem = entry[1]; const lectura = LecturasMPM[elem]; const base = lectura.base[Math.floor(Math.random()*lectura.base.length)]; const tono = avgVal>=7.5 ? lectura.intensidad.alto[0] : avgVal>=5 ? lectura.intensidad.medio[0] : lectura.intensidad.bajo[0]; const accion = lectura.accion[Math.floor(Math.random()*lectura.accion.length)]; const msg = base + " " + tono + " " + accion; return { id: entry[0], elem, valor: entry[2], avg: avgVal, msg }; }
+
+    function generarPronostico(total,dom,metrics){ let base = ""; if(total >= 10) base = "Ventana muy favorable: aprovecha momentum con claridad estratégica."; else if(total >= 5) base = "Situación favorable: puedes avanzar con seguridad y foco controlado."; else if(total >= 0) base = "Estado mixto: ajustes concretos permiten mejorar la dirección."; else if(total >= -5) base = "Tensión moderada: reduce ritmo y revisa prioridades antes de avanzar."; else base = "Alerta: riesgo de bloqueo. Recomendada reestructuración y soporte externo."; const extras = { fuego:"Acción: prioriza ejecución dirigida.", agua:"Relación: clarifica percepciones antes de actuar.", aire:"Mente: reduce opciones y aumenta foco.", tierra:"Estructura: consolida la base antes de expandir." }; const indicador = "Emociones: " + metrics.emociones + " · " + "Psicológico: " + metrics.psicologico + " · " + "Racional: " + metrics.racional + " · " + "Ganas de vivir: " + metrics.ganas + " · " + "Biorritmo: " + metrics.biorritmo; return base + "\n" + (extras[dom] || "") + "\n\n" + indicador; }
+
+    function calcular(){ const B1 = calcBlock(0); const B2 = calcBlock(4); const B3 = calcBlock(8); const B4 = calcBlock(12); const total = B1.valor + B2.valor + B3.valor + B4.valor; const count = {fuego:0, agua:0, aire:0, tierra:0}; [B1,B2,B3,B4].forEach(b => { if(b && b.elem) count[b.elem]++; }); const priority = ["fuego","agua","aire","tierra"]; let maxCount = -1; let dom = "aire"; priority.forEach(k => { if(count[k] > maxCount){ maxCount = count[k]; dom = k; } }); const metrics = computeMetrics(resps); const pron = generarPronostico(total,dom,metrics); const html = `<b>Módulo:</b> ${tipo.replace(/_/g," ").toUpperCase()}<br><br>` + `<b>Situación (B1):</b> Código ${B1.id} ` + `<span class="tag ${B1.elem}">${B1.elem}</span> — ${B1.msg}<br><br>` + `<b>Movimiento (B2):</b> Código ${B2.id} ` + `<span class="tag ${B2.elem}">${B2.elem}</span> — ${B2.msg}<br><br>` + `<b>Transformación (B3):</b> Código ${B3.id} ` + `<span class="tag ${B3.elem}">${B3.elem}</span> — ${B3.msg}<br><br>` + `<b>Resultado (B4):</b> Código ${B4.id} ` + `<span class="tag ${B4.elem}">${B4.elem}</span> — ${B4.msg}<br><br>` + `<b>Valor total:</b> ${(total>0 ? "+"+total : total)}<br>` + `<b>Elemento dominante:</b> ${dom.toUpperCase()}<br><br>` + `<b>Pronóstico MPM:</b><br>` + `<pre>${pron}</pre>`; document.getElementById('resultado').innerHTML = html; lastResult = {tipo,B1,B2,B3,B4,total,dom,pron,metrics,rawResponses:resps.slice(0)}; go('result'); }
+
+    // -------- persistencia local (localStorage) --------
+    const STORAGE_KEY = 'mpm_v7_history_v1';
+
+    function getHistory(){ try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ console.error('read history',e); return []; } }
+    function saveHistory(hist){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(hist)); return true;}catch(e){console.error('save history',e); return false;} }
+
+    function saveResult(){
+      if(!lastResult) return alert('Realiza un test primero.');
+      const ageOk = document.getElementById('ageCheck') && document.getElementById('ageCheck').checked;
+      if(!ageOk) return alert('Debes confirmar que tienes 18 años o más para guardar el resultado.');
+      const name = document.getElementById('userName').value.trim();
+      if(!name) return alert('Escribe tu nombre.');
+      const entry = {id: Date.now(), savedAt: new Date().toISOString(), name, email: document.getElementById('userEmail').value.trim() || null, result: lastResult};
+      const hist = getHistory(); hist.unshift(entry);
+      if(saveHistory(hist)){
+        alert('Resultado guardado en historial local.'); renderHistory();
+      }else{
+        alert('No se pudo guardar el resultado (localStorage bloqueado).');
+      }
+    }
+
+    function renderHistory(){ const list = document.getElementById('historyList'); const hist = getHistory(); if(!list) return; if(hist.length===0){ list.innerHTML = '<div class="small">No hay resultados guardados.</div>'; return; } list.innerHTML = ''; hist.forEach(item=>{ const div = document.createElement('div'); div.className='history-item'; const left = document.createElement('div'); left.innerHTML = `<div style="font-weight:700">${item.name} — ${new Date(item.savedAt).toLocaleString()}</div><div class="tiny">Módulo: ${item.result.tipo.replace(/_/g,' ')}, Elemento: ${item.result.dom.toUpperCase()}, Total: ${item.result.total}</div>`; const right = document.createElement('div'); right.innerHTML = `<button class="btn" onclick='loadHistory(${item.id})' style="padding:6px 8px">Abrir</button> <button class="btn" onclick='downloadHistoryItem(${item.id})' style="background:#06b6d4;padding:6px 8px">Descargar</button> <button class="btn" onclick='deleteHistoryItem(${item.id})' style="background:#ef4444;padding:6px 8px">Borrar</button>`; div.appendChild(left); div.appendChild(right); list.appendChild(div); }); }
+
+    function loadHistory(id){ const hist = getHistory(); const item = hist.find(h=>h.id===id); if(!item) return alert('Entrada no encontrada.'); lastResult = item.result; document.getElementById('userName').value = item.name || ''; document.getElementById('userEmail').value = item.email || ''; document.getElementById('resultado').innerHTML = `<b>Guardado:</b> ${new Date(item.savedAt).toLocaleString()}<br><br>` + document.getElementById('resultado').innerHTML; go('result'); }
+
+    function downloadHistoryItem(id){ const hist = getHistory(); const item = hist.find(h=>h.id===id); if(!item) return alert('Entrada no encontrada.'); const dataStr = JSON.stringify(item, null, 2); const blob = new Blob([dataStr], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `mpm_result_${id}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+    function deleteHistoryItem(id){ let hist = getHistory(); hist = hist.filter(h=>h.id!==id); if(saveHistory(hist)){ alert('Entrada borrada.'); renderHistory(); } }
+
+    function clearHistory(){ if(!confirm('Borrar todo el historial local?')) return; try{ localStorage.removeItem(STORAGE_KEY); renderHistory(); alert('Historial borrado.'); }catch(e){alert('No se pudo borrar historial.');} }
+
+    // descargar resultado actual (json | txt)
+    function downloadResult(type){ if(!lastResult) return alert('Realiza un test primero.'); const payload = {savedAt:new Date().toISOString(), result:lastResult}; if(type==='json'){ const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `mpm_result_${Date.now()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }else{ const lines = []; lines.push(`Módulo: ${payload.result.tipo}`); lines.push(`Elemento dominante: ${payload.result.dom}`); lines.push(`Valor total: ${payload.result.total}`); lines.push(''); lines.push('Situación: ' + payload.result.B1.msg); lines.push('Movimiento: ' + payload.result.B2.msg); lines.push('Transformación: ' + payload.result.B3.msg); lines.push('Resultado: ' + payload.result.B4.msg); lines.push(''); lines.push('Indicadores:'); lines.push(`Emociones: ${payload.result.metrics.emociones}`); lines.push(`Psicológico: ${payload.result.metrics.psicologico}`); lines.push(`Racional: ${payload.result.metrics.racional}`); lines.push(`Ganas de vivir: ${payload.result.metrics.ganas}`); lines.push(`Biorritmo: ${payload.result.metrics.biorritmo}`); const blob = new Blob([lines.join('\n')],{type:'text/plain'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `mpm_result_${Date.now()}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); } }
+
+    // enviar por email (igual que antes -> mailto) pero con confirm
+    function sendEmail(){ if(!lastResult) return alert('Realiza un test primero.'); const name = document.getElementById('userName').value.trim(); if(!name) return alert('Escribe tu nombre.'); const email = document.getElementById('userEmail').value.trim(); const r = lastResult; const body = "Nombre: " + name + "\nEmail: " + (email || "no indicado") + "\n\nMódulo: " + r.tipo + "\n\nSituación: " + r.B1.msg + "\nMovimiento: " + r.B2.msg + "\nTransformación: " + r.B3.msg + "\nResultado: " + r.B4.msg + "\n\nValor total: " + r.total + "\nElemento dominante: " + r.dom + "\n\nPronóstico:\n" + r.pron + "\n\nIndicadores:\nEmociones: " + r.metrics.emociones + "\nPsicológico: " + r.metrics.psicologico + "\nRacional: " + r.metrics.racional + "\nGanas de vivir: " + r.metrics.ganas + "\nBiorritmo: " + r.metrics.biorritmo; const mailto = "mailto:preemptivemovement@gmail.com" + "?subject=" + encodeURIComponent("Resultado MPM — " + name) + "&body=" + encodeURIComponent(body); if(confirm('Abrir cliente de correo para enviar resultado?')){ window.location.href = mailto; } }
+
+    // reveal phone
+    function revealPhone(){ const full='672680535'; const el=document.getElementById('phoneMasked'); const btn=document.getElementById('revealPhoneBtn'); if(el && btn){ if(el.dataset.revealed==='1'){ el.textContent='672•••535'; el.dataset.revealed='0'; btn.textContent='Mostrar teléfono'; } else { el.textContent=full; el.dataset.revealed='1'; btn.textContent='Ocultar teléfono'; try{ navigator.clipboard && navigator.clipboard.writeText(full); btn.textContent='Copiado y mostrado'; setTimeout(()=>{ if(el.dataset.revealed==='1') btn.textContent='Ocultar teléfono'; },900); }catch(e){} } } }
+
+    // ---- QR helpers ----
+    function generateQR(){ const url = (document.getElementById('shareUrl')||{}).value || ''; if(!url) return alert('Pega primero un enlace público (ej. Drive o tu web).'); const qr = document.getElementById('qrPreview'); const src = 'https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + encodeURIComponent(url) + '&choe=UTF-8'; qr.src = src; qr.style.display = 'block'; }
+    function downloadQR(){ const qr = document.getElementById('qrPreview'); if(!qr || qr.style.display==='none') return alert('Genera el QR primero.'); const a = document.createElement('a'); a.href = qr.src; a.download = 'mpm_qr.png'; document.body.appendChild(a); a.click(); a.remove(); }
+
+    // ---- service worker (simple) ----
+    try{
+      const swCode = `self.addEventListener('install', function(e){ self.skipWaiting(); });\nself.addEventListener('fetch', function(e){ /* no-op basic sw */ });`;
+      const blob = new Blob([swCode], {type: 'text/javascript'});
+      const swUrl = URL.createObjectURL(blob);
+      if('serviceWorker' in navigator){ navigator.serviceWorker.register(swUrl).catch(()=>{}); }
+    }catch(e){console.warn('SW error',e)}
+
+    // ---- Attach DOM handlers (safer than inline onclicks) ----
+    function attachHandlers(){
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      const btnCancel = document.getElementById('btnCancel');
+      const btnSend = document.getElementById('btnSend');
+      const btnSave = document.getElementById('btnSave');
+      const btnJson = document.getElementById('btnJson');
+      const btnTxt = document.getElementById('btnTxt');
+      const btnPrint = document.getElementById('btnPrint');
+      const btnBackMenu = document.getElementById('btnBackMenu');
+      const btnClear = document.getElementById('btnClearHistory');
+      const btnBackFromHistory = document.getElementById('btnBackFromHistory');
+      const revealBtn = document.getElementById('revealPhoneBtn');
+
+      btnPrev && btnPrev.addEventListener('click', prev);
+      btnNext && btnNext.addEventListener('click', next);
+      btnCancel && btnCancel.addEventListener('click', ()=>go('menu'));
+      btnSend && btnSend.addEventListener('click', sendEmail);
+      btnSave && btnSave.addEventListener('click', saveResult);
+      btnJson && btnJson.addEventListener('click', ()=>downloadResult('json'));
+      btnTxt && btnTxt.addEventListener('click', ()=>downloadResult('txt'));
+      btnPrint && btnPrint.addEventListener('click', ()=>window.print());
+      btnBackMenu && btnBackMenu.addEventListener('click', ()=>go('menu'));
+      btnClear && btnClear.addEventListener('click', clearHistory);
+      btnBackFromHistory && btnBackFromHistory.addEventListener('click', ()=>go('menu'));
+      revealBtn && revealBtn.addEventListener('click', revealPhone);
+    }
+
+    // initial render
+    window.addEventListener('DOMContentLoaded', ()=>{
+      attachHandlers();
+      renderHistory();
+      go('menu');
+    });
+  </script>
+</body>
+</html>
